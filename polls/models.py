@@ -9,7 +9,9 @@ class Question(models.Model):
 	question_author = models.CharField(max_length=200, default='Alex Hurst')
 	pub_date = models.DateTimeField('date published')
 	def was_published_recently(self):
-		return self.pub_date >= timezone.now() - datetime.timedelta(days=1)
+		now = timezone.now()
+		recent_limit = now - datetime.timedelta(days=1)
+		return recent_limit <= self.pub_date < now
 	def __str__(self):
 		return(self.question_text)
 	was_published_recently.admin_order_field = 'pub_date'
