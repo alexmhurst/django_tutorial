@@ -4,7 +4,7 @@ from django.test import TestCase
 
 import datetime
 from django.utils import timezone
-from .models import Question
+from .models import Question, Choice
 from django.core.urlresolvers import reverse
 
 class QuestionMethodTests(TestCase):
@@ -36,10 +36,23 @@ class QuestionMethodTests(TestCase):
 		recent_question = Question(pub_date = time)
 		self.assertEqual(recent_question.was_published_recently(), True)
 
+class ChoiceMethodTests(TestCase):
+	def test_returns_correct_string(self):
+		"""
+		choice.__to_str__() should return the text of the choice.
+		"""
+		q = create_question("Question 1.", 0)
+		c = create_choice(id=1, question=q, choice_text="Choice 1.", votes=0)
+		self.assertEqual(c.__str__(), "Choice 1.")
+
 def create_question(question_text, days):
 	time = timezone.now() + datetime.timedelta(days=days)
 	return Question.objects.create(question_text=question_text, 
 					pub_date = time)
+
+def create_choice(id, question, choice_text, votes):
+	return Choice.objects.create(id=id, question=question, choice_text=choice_text, 
+					votes=votes)
 
 class QuestionViewTests(TestCase):
 	def test_index_view_with_no_questions(self):
