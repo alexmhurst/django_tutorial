@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-# Create your tests here.
+	# Create your tests here.
 
 import datetime
 from django.utils import timezone
@@ -137,5 +137,14 @@ class voteViewTests(TestCase):
 		response = self.client.post(reverse("polls:vote", kwargs={'question_id': myq.id}), data={'choice': myc_id})
 		self.assertEqual(Choice.objects.get(id=myc_id).votes, 1)
 
+	def test_invalid_vote_returns_error(self):
+		"""
+		When a vote is submitted without a valid choice, we should get an error message.
+		"""
 
-
+		myq = create_question("Question 1.", -1)
+		myc_id = myq.choice_set.create(choice_text="Choice 1.").id
+		response = self.client.post(reverse("polls:vote", kwargs={'question_id': myq.id}),
+						{'choice': myc_id+1})
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "You didn&#39;t select a choice.")
