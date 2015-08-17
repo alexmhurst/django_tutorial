@@ -37,22 +37,25 @@ class QuestionMethodTests(TestCase):
 		self.assertEqual(recent_question.was_published_recently(), True)
 
 class ChoiceMethodTests(TestCase):
-	def test_returns_correct_string(self):
+	def test_choice_returns_correct_string(self):
 		"""
 		choice.__to_str__() should return the text of the choice.
 		"""
 		q = create_question("Question 1.", 0)
-		c = create_choice(id=1, question=q, choice_text="Choice 1.", votes=0)
+		c = q.choice_set.create(choice_text="Choice 1.", votes=0)
 		self.assertEqual(c.__str__(), "Choice 1.")
+	def test_choice_starts_with_no_votes(self):
+		"""
+		When a choice is created, it should have a vote count of 0.
+		"""
+		q = create_question("Question 1.", 0)
+		c = q.choice_set.create(choice_text="Choice 1.",)
+		self.assertEqual(c.votes, 0)
 
 def create_question(question_text, days):
 	time = timezone.now() + datetime.timedelta(days=days)
 	return Question.objects.create(question_text=question_text, 
 					pub_date = time)
-
-def create_choice(id, question, choice_text, votes):
-	return Choice.objects.create(id=id, question=question, choice_text=choice_text, 
-					votes=votes)
 
 class QuestionViewTests(TestCase):
 	def test_index_view_with_no_questions(self):
@@ -121,4 +124,18 @@ class QuestionViewTests(TestCase):
 		response = self.client.get(reverse('polls:index'))
 		self.assertEqual(len(Question.objects.all()), 6)
 		self.assertQuerysetEqual(response.context['latest_question_list'], ['<Question: Past question 1.>', '<Question: Past question 2.>',  '<Question: Past question 3.>',  '<Question: Past question 4.>',  '<Question: Past question 5.>'])
-		
+
+class voteViewTests(TestCase):
+	
+	def test_voting_once_increments_vote(self):
+		"""
+		When the vote view is loaded, the vote count for a choice should increase by 1.
+		"""
+
+		myq = create_question("Question 1.", -1)
+		myc_id = myq.choice_set.create(choice_text="Choice 1.").id
+		response = self.client.post(reverse("polls:vote", kwargs={'question_id': myq.id}), data={'choice': myc_id})
+		self.assertEqual(Choice.objects.get(id=myc_id).votes, 1)
+
+
+
